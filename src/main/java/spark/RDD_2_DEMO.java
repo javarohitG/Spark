@@ -17,7 +17,7 @@ public class RDD_2_DEMO {
         SparkConf conf = new SparkConf().setAppName("startingSpark").setMaster("local[*]");
         JavaSparkContext sc = new JavaSparkContext(conf);
 
-        JavaRDD<String> autoAllData = sc.textFile("E:\\work\\Spark\\src\\main\\resources\\test.csv");
+        JavaRDD<String> autoAllData = sc.textFile("E:\\work\\Spark\\src\\main\\resources\\test.csv",2);
         System.out.println("Count is " + autoAllData.count());
 
         sc.close();
