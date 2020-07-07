@@ -20,15 +20,20 @@ public class RDD_2_FlatMap {
 
         JavaRDD<String> autoAllData = sc.textFile("E:\\work\\Spark\\src\\main\\resources\\auto-data.csv",2);
         System.out.println("Count is " + autoAllData.count());
+        JavaRDD<String> mapWord = autoAllData.map((x)->(x));
 
-        JavaRDD<String> word = autoAllData.flatMap(new FlatMapFunction<String, String>() {
+        JavaRDD<String> flatMapword = autoAllData.flatMap(new FlatMapFunction<String, String>() {
             @Override
             public Iterator<String> call(String s) throws Exception {
-                return Arrays.asList(s.split(" ")).iterator();
+                return Arrays.asList(s.split(",")).iterator();
             }
         });
-        System.out.println(""+word.count());
+        System.out.println("Word Count is ::::   "+flatMapword.count());
+
+        mapWord.collect().forEach(System.out::println);
+        flatMapword.collect().forEach(System.out::println);
         sc.close();
+
 
     }
 }
