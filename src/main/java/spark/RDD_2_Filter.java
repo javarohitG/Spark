@@ -31,7 +31,12 @@ public class RDD_2_Filter {
 
         JavaRDD<String>  toyotaFilterData = noHeaderData.filter(stri->stri.contains("toyota"));
 
+        JavaRDD<String> toyotaDistinct = toyotaFilterData.distinct();
+
         toyotaFilterData.collect().forEach(System.out::println);
+
+        System.out.println("Count without distinct "+ toyotaFilterData.count());
+        System.out.println("Count without distinct "+ toyotaDistinct.count());
         sc.close();
     }
 }
