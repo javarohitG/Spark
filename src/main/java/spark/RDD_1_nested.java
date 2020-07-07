@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class RDD_1_Sqrt {
+public class RDD_1_nested {
     public static void main(String a[]){
 
         List<Integer> input_data=new ArrayList<>();
@@ -30,19 +30,15 @@ public class RDD_1_Sqrt {
 
 
         JavaRDD<Integer> myRdd = sc.parallelize(input_data);
-        Integer result = myRdd.reduce((value1,value2) -> (value1+value2));
-
-        JavaRDD<Double> SqrtRDD = myRdd.map((value) -> Math.sqrt(value));
+        JavaRDD<Double> SqrtRDD = myRdd.map((value) -> (Math.sqrt(value)));
 
         //SqrtRdd.foreach(value->System.out.println(value));
         //New Way of Foreach in Java 1.8 is
         //SqrtRdd.foreach(System.out::println);
 
         myRdd.collect().forEach(System.out::println);
-        //System.out.print(myRdd);
+        System.out.print(myRdd);
 
-        SqrtRDD.collect().forEach(System.out::println);
-        //System.out.print(SqrtRDD);
         //How to Count How many Elements are There in RDD
         // how many elements in sqrtRdd
         // using just map and reduce
