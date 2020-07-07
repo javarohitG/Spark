@@ -31,9 +31,9 @@ public class RDD_2_FlatMap {
         System.out.println("Word Count is ::::   "+flatMapword.count());
 
         mapWord.collect().forEach(System.out::println);
+
+        mapWord.saveAsTextFile("E:\\work\\Spark\\src\\main\\resources\\Output");
         flatMapword.collect().forEach(System.out::println);
         sc.close();
-
-
     }
 }
