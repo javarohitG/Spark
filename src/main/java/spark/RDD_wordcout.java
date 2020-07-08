@@ -19,6 +19,8 @@
 //        SparkConf conf = new SparkConf().setAppName("startingSpark").setMaster("local[*]");
 //        JavaRDD<String> autoAllData = sc.textFile("E:\\work\\Spark\\src\\main\\resources\\abc.txt",2);
 //
+//        JavaRDD count = autoAllData.flatMap(line->line.split(" ")).map(word);
+//
 //        //JavaRDD<Integer> count = autoAllData.flatMap(line => line.split(" ")).map(word => (word,1)).reduceByKey(_+_) counts.collect();
 //
 //
