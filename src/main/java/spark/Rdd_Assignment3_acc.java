@@ -51,12 +51,11 @@ public class Rdd_Assignment3_acc {
 			}
 		});
 
-		// Execute an action to force the map. Otherwise accumulators are not
-		// triggered.
 		autoOut.count();
 
 		System.out.println("Demo for Accumulators and Broadcasts : ");
 		System.out.println("Sedan Count : " + sedanCount.value() +
 				"  HatchBack Count : " + hatchbackCount.value());
+		sc.close();
 	}
 }
