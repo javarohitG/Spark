@@ -6,17 +6,16 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function2;
-import static org.apache.commons.lang3.StringUtils.isNumeric;
 
 public class Rdd_MPG {
 	public static void main(String args[]) throws InterruptedException {
-		Logger.getLogger("org.apache").setLevel(Level.WARN);
+		Logger.getLogger("org.apache").setLevel(Level.INFO);
 
 		SparkConf conf = new SparkConf().setAppName("startingSpark").setMaster("local[*]");
 		JavaSparkContext sc = new JavaSparkContext(conf);
 
 		// Create a RDD from a file
-		JavaRDD<String> autoAllData = sc.textFile("E:\\work\\Spark\\src\\main\\resources\\auto-data.csv");
+		JavaRDD<String> autoAllData = sc.textFile("E:\\work\\Spark\\src\\main\\resources\\auto-data.csv",1);
 		System.out.println("Total Records in Autodata :" + autoAllData.count());
 		System.out.println("Spark Operations : Load from CSV");
 
@@ -41,7 +40,6 @@ class totalMPG implements Function2<String, String, String> {
 	}
 
 	private int getMPGValue(String str) {
-		// System.out.println(str);
 		String[] attList = str.split(",");
 		if (isNumeric(attList[9])) {
 			return Integer.valueOf(attList[9]);
