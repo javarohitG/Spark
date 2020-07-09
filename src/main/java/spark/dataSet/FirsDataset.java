@@ -13,17 +13,20 @@ public class FirsDataset {
 
         Logger.getLogger("org.apache").setLevel(Level.WARN);
 
-        SparkConf conf = new SparkConf().setAppName("startingSpark").setMaster("local[*]");
-        JavaSparkContext sc = new JavaSparkContext(conf);
+//        SparkConf conf = new SparkConf().setAppName("startingSpark").setMaster("local[*]");
+//        JavaSparkContext sc = new JavaSparkContext(conf);
 
         SparkSession spark = SparkSession.builder()
                 .appName("TestSql")
                 .master("local[*]")
-                .config("spark.sql.warehouse.dir","file:///e:/tm;")
+                .config("spark.sql.warehouse.dir","file:///e:/tmp")
                 .getOrCreate();
         Dataset<Row> dataset = spark.read().option("header",true)
-                .csv("E:\\work\\Spark\\src\\main\\resources\\auto-data.csv");
+                .csv("E:\\work\\Spark\\src\\main\\resources\\students.csv");
         dataset.show();
+
+
+        spark.close();
 
     }
 }
