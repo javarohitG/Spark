@@ -21,24 +21,20 @@ public class Rdd_Cache {
 		SparkConf conf = new SparkConf().setAppName("Demo").setMaster("local[*]");
 		JavaSparkContext sc = new JavaSparkContext(conf);
 
-		JavaRDD<String> myCSVRdd = sc.textFile("E:\\work\\Spark\\src\\main\\resources\\auto-data.csv",8);
+		JavaRDD<String> myCSVRdd = sc.textFile("src\\main\\resources\\movietweets.csv",8);
 
-		String header = myCSVRdd.first();
+		for(String s : myCSVRdd.take(5)){
+			System.out.println(s);
+		}
 
-		JavaRDD<String> myCSVRdd_data = myCSVRdd.filter(s -> !s.equals(header));
+		while (true){
+			try{
+				Thread.sleep(10000);
+			}catch(InterruptedException e){
+				e.printStackTrace();
+			}
 
-		myCSVRdd_data.cache();
-
-		System.out.println("No. of partitions in autoData = " + myCSVRdd_data.getNumPartitions());
-
-		JavaRDD<String> wordsList = sc.parallelize(Arrays.asList("hello", "war", "peace", "world"), 4);
-
-		System.out.println("No. of partitions in wordsList = " +
-				wordsList.getNumPartitions());
-
-//		System.out.println("Demo for Accumulators and Broadcasts : ");
-//		System.out.println("Sedan Count : " + sedanCount.value() +
-//				"  HatchBack Count : " + hatchbackCount.value());
-		sc.close();
+		}
+		//sc.close();
 	}
 }
