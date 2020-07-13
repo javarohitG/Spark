@@ -1,0 +1,423 @@
+
+Start VM and Open TErminal and Type pyspark::::
+
+>>>pyspark
+***********************************************
+RDD from INternal Collection:::
+mylist=list(range(1,6))
+myrdd=sc.parallelize(mylist)
+myrdd. collect ()
+myrdd. first ()
+myrdd. take (5)
+**************************
+words = sc.parallelize (
+   ["scala", 
+   "java", 
+   "hadoop", 
+   "spark", 
+   "akka",
+   "spark vs hadoop", 
+   "pyspark",
+   "pyspark and spark"]
+)
+coll = words.collect()
+*****
+words_filter = words.filter(lambda x: 'spark' in x)
+words_filter.collect()
+***********************************************
+>>> localFile = sc.textFile("file:///home/cloudera/Desktop/stu.txt")
+>>> localFile.take(5)
+
+RDDread. Collect ()
+RDDread. First ()
+RDDread. Take (5)
+*******************************************************
+>>>>data = sc.textFile("/user/cloudera/spark-input/baby-names.csv")
+>>>>data.collect
+
+***********************************************************
+*************************************************************
+spark rdd transformations:::::
+*********************************************************************************************
+1)map
+2)flatMap
+3)filter
+4)mapPartitions
+5)mapPartitionsWithIndex
+6)sample
+7)union
+8)intersection
+9)distinct
+10)groupBy
+11)keyBy
+12)Zip
+13)zipwithIndex
+14)Colease
+15)Repartition
+16)sortBy
+/********
+MAP::
+
+---------------------------------------map.py---------------------------------------
+from pyspark import SparkContext
+sc = SparkContext("local", "Map app")
+words = sc.parallelize (
+   ["scala", 
+   "java", 
+   "hadoop", 
+   "spark", 
+   "akka",
+   "spark vs hadoop", 
+   "pyspark",
+   "pyspark and spark"]
+)
+
+>>>>> words.collect()
+
+***************************************
+>>> myFile = sc.textFile("file:///home/cloudera/Desktop/stu.txt")
+>>> myFile.take(5)
+
+Now let’s divide each string on spaces and analyze the structure
+mappedconfusion = myFile.map(lambda line : line.split(" "))
+
+mappedconfusion.take(5)
+
+From the output it is evident that each line is a separate 
+iterable of words which itself is contained in another iterable
+ i.e. iterable of iterables
+ 
+***************************************
+words_map = words.map(lambda x: (x, 1))
+mapping = words_map.collect()
+print "Key value pair -> %s" % (mapping)
+>>>>>>>>>$SPARK_HOME/bin/spark-submit map.py
+*****************************************
+words_map = words.map(lambda x: [x, len(x)])
+>>> words_map.collect()
+[['scala', 5], ['java', 4], ['hadoop', 6], ['spark', 5], ['akka', 4], ['spark vs hadoop', 15], ['pyspark', 7], ['pyspark and spark', 17]]
+>>> 
+words_map2 = words.map(lambda x: [x, x[0]])
+>>> words_map2.collect()
+
+*******************************************
+ x=sc.parallelize([1,2,3])
+>>> y=x.map(lambda x:[x,x*x])
+>>> y.collect()
+[[1, 1], [2, 4], [3, 9]]
+*************************************************
+
+flatMap operation and how is it different from Map transformations in Spark -
+data = sc.parallelize([1,2,3])
+data1 = data.flatMap(lambda e :[e,e,e])
+data1.collect()
+[1, 1, 1, 2, 2, 2, 3, 3, 3]
+
+****
+FLATMAP(FUNC)
+FlatMap is similar to map, because it applies a function to all elements in a RDD.  But, flatMap flattens the results.
+sc.parallelize([2, 3, 4]).flatMap(lambda x: [x,x,x]).collect()
+[2, 2, 2, 3, 3, 3, 4, 4, 4]
+ 
+>>> sc.parallelize([1,2,3]).map(lambda x: [x,x,x]).collect()
+[[1, 1, 1], [2, 2, 2], [3, 3, 3]]
+
+***********************************************
+words = sc.parallelize (
+   ["scala", 
+   "java", 
+   "hadoop", 
+   "spark", 
+   "akka",
+   "spark vs hadoop", 
+   "pyspark",
+   "pyspark and spark"]
+)
+***********************************************
+>>>wordsflatmap = words.flatMap(lambda line : line.split(" "))
+>>> wordsflatmap.collect()
+>>>>wordsflatmap.map(lambda x:len(x))
+
+********************************************************
+
+
+*********************************************************
+flatMappedConfusion = myFile.flatMap(lambda line : line.split(" "))
+flatMappedConfusion.take(5)
+
+***** each word is now acting as  single  line i.e. it is now iterable of strings.
+***********************
+
+Filter() Transformation in Spark
+This transformation is used to reduce the old RDD based on some condition.
+*********** It Filter Out all the Word that Contains the Given Key..  *****
+word_filter=words.filter(lambda line : ("spark" in line.lower()))
+
+>>> word_filter.collect()
+['spark', 'spark vs hadoop', 'pyspark', 'pyspark and spark']
+>>
+*****************************
+
+words = sc.parallelize (
+   ["scala", 
+   "java", 
+   "hadoop", 
+   "Spark", 
+   "akka",
+   "spark vs hadoop", 
+   "pyspark",
+   "pySpark and spark"]
+)
+
+word_filter=words.filter(lambda line : ("spark" in line.lower()))
+
+>>> word_filter.collect()
+['spark', 'spark vs hadoop', 'pyspark', 'pyspark and spark']
+>>>>> word_filter=words.filter(lambda line : ("spark" in line.lower()))
+>>> word_filter.collect()
+['Spark', 'spark vs hadoop', 'pyspark', 'pySpark and spark']
+>>> word_filter=words.filter(lambda line : ("Spark" in line.lower()))
+>>> word_filter.collect()
+[]
+>>> >>> word_filter=words.filter(lambda line : ("Spark" in line))
+>>> word_filter.collect()
+['Spark', 'pySpark and spark']
+
+********************************************************
+WORD COUNT: with Filter::::
+
+>>> textFile = sc.textFile("/user/cloudera/spark-input/Input1.txt")
+>>> textFile.collect()
+[u'this is my spark class', u'in this class we use scala', u'spark in an inmemorry processing component']
+>>> wordsflatmap = textFile.flatMap(lambda line : line.split(" "))
+>>>>wordsflatmap.collect()
+>>>> word_filter=wordsflatmap.filter(lambda line : ("spark" in line))
+>>> word_filter.collect()
+>>>>word_filter.count()
+*************************************
+Local File
+>>> textFile = sc.textFile("file:///home/cloudera/Desktop/word_count.text")
+HDFS File
+///>>> textFile = sc.textFile("hdfs://localhost:8020/user/cloudera/word_count.text")
+>>> textFile.collect()
+[u'this is my spark class', u'in this class we use scala', u'spark in an inmemorry processing component']
+>>> wordsflatmap = textFile.flatMap(lambda line : line.split(" "))
+>>>>wordsflatmap.collect()
+>>>> word_filter=wordsflatmap.filter(lambda line : ("England" in line))
+>>> word_filter.collect()
+>>>>word_filter.count()
+*************************************
+
+
+********************************************
+
+union() Transformation in Spark
+Union is basically used to merge two RDDs together if they have the same structure.
+UNION(A DIFFERENT RDD)
+ **********Union will not REmove the Duplicates.....********
+ >>> one = sc.parallelize(range(1,10))
+>>> two = sc.parallelize(range(5,15))
+>>> one.union(two).collect()
+
+>>> one.union(two).distinct().collect()
+**********************************************************
+*******************************************************
+>>> m1 = [("physics",85),("maths",75),("chemistry",95)]
+>>> m2 = [("physics",65),("maths",45),("chemistry",85)]
+>>> m1rdd = sc.parallelize(m1)
+>>> m2rdd = sc.parallelize(m2)
+>>> m1rdd.union(m2rdd).collect()
+[Stage 41:>                                                         (0 + 0) / 2                                                                               [('physics', 85), ('maths', 75), ('chemistry', 95), ('physics', 65), ('maths', 45), ('chemistry', 85)]
+>>> m3 = [("physics",85),("maths",45),("chemistry",85)]
+>>> m3rdd = sc.parallelize(m3)
+>>> m1rdd.union(m3rdd).collect()
+[('physics', 85), ('maths', 75), ('chemistry', 95), ('physics', 85), ('maths', 45), ('chemistry', 85)]
+>>> 
+
+********************************
+******
+intersection() Transformation in Spark
+Again, simple.  Similar to union but return the intersection of two RDDs
+>>> one = sc.parallelize(range(1,10))
+>>> two = sc.parallelize(range(5,15))
+>>> one.intersection(two).collect()
+[5, 6, 7, 8, 9]
+
+Intersection gives you the common terms or objects from the two RDDS.
+Cricket_team = ["sachin","abhay","michael","rahane","david","ross","raj","rahul","hussy","steven","sourav"]
+
+Toppers = ["rahul","abhay","laxman","bill","steve"]
+
+cricketRDD = sc.parallelize(Cricket_team)
+
+toppersRDD = sc.parallelize(Toppers)
+
+toppercricketers = cricketRDD.intersection(toppersRDD)
+
+toppercricketers.collect()
+
+***********************************
+INTERSECTION(A DIFFERENT RDD)
+
+**************
+
+distinct()  Transformation in Spark
+
+This transformation is used to get rid of any ambiguities. As the name suggest it picks out the lines from the RDD that are unique.
+best_story = ["movie1","movie3","movie7","movie5","movie8"]
+
+best_direction = ["movie11","movie1","movie5","movie10","movie7"]
+
+best_screenplay = ["movie10","movie4","movie6","movie7","movie3"]
+
+story_rdd = sc.parallelize(best_story)
+
+direction_rdd = sc.parallelize(best_direction)
+
+screen_rdd = sc.parallelize(best_screenplay)
+
+total_nomination_rdd = story_rdd.union(direction_rdd).union(screen_rdd)
+
+total_nomination_rdd.collect()
+
+***************************
+**********************************
+unique_movies_rdd = total_nomination_rdd.distinct()
+unique_movies_rdd .collect()
+****************************************
+ASSIGNMENT::::::::: Find All Unique Words in word_count.txt file***********
+
+ FlatMap.DISTINCT.COUNT
+
+
+
+
+
+***********************
+
+join
+----------------------------------------join.py---------------------------------------
+from pyspark import SparkContext
+sc = SparkContext("local", "Join app")
+x = sc.parallelize([("spark", 1), ("hadoop", 4)])
+y = sc.parallelize([("spark", 2), ("hadoop", 5)])
+joined = x.join(y)
+final = joined.collect()
+print "Join RDD -> %s" % (final)
+**************************************
+
+y = sc.parallelize([("spark", 2), ("hadoop", 5),("java",5)])
+joined = x.join(y)
+>>> joined.collect()
+[('spark', (1, 2)), ('hadoop', (4, 5))]
+*********************************************
+>>> joined = x.leftOuterJoin(y)
+>>> joined.collect()
+                                                                                                [('spark', (1, 2)), ('hadoop', (4, 5))]
+>>> joined = x.rightOuterJoin(y)
+>>> joined.collect()
+[('spark', (1, 2)), ('java', (None, 5)), ('hadoop', (4, 5))]
+>>> joined = x.fullOuterJoin(y)
+>>> joined.collect()
+[('spark', (1, 2)), ('java', (None, 5)), ('hadoop', (4, 5))]
+>>> 
+
+******************
+
+ ************
+ ********************************
+
+***********************************************
+reduce
+nums = sc.parallelize([1, 2, 3, 4, 5])
+nums.reduce(lambda x,y: x+y )
+
+----------------------------------------reduce.py---------------------------------------
+from pyspark import SparkContext
+from operator import add
+sc = SparkContext("local", "Reduce app")
+nums = sc.parallelize([1, 2, 3, 4, 5])
+adding = nums.reduce(lambda x,y: x+y )
+print "Adding all the elements -> %i" % (adding)
+
+$SPARK_HOME/bin/spark-submit reduce.py
+****************************
+WORD COUNT::
+
+>>> myFile = sc.textFile("file:///home/cloudera/Desktop/stu.txt")
+>>> myFile.take(5)
+words=myFile.flatMap(lambda line : line.split(" "))
+words_map = words.map(lambda x: (x, 1))
+word_reduce_By_Key=words_map.reduceByKey(lambda x,y: x+ y)
+***********************
+Sample (withReplacement, fraction, seed)
+
+This transformation is used to pick sample RDD from a larger 
+RDD. It is frequently used in Machine learning operations 
+where a sample of the dataset needs to be taken. The fraction 
+means percentage of the total data you want to take the sample 
+from.
+
+Let’s sample the confusedRDD with 50% of it allowing replacement-
+sampledconfusion = myFile.sample(True,0.5,3) //True implies withReplacement
+
+sampledconfusion.collect()
+**************************************************
+
+**************************************
+RDD Partitions
+
+Parallelism is the key feature of any distributed system where operations are done by dividing the data into multiple parallel partitions. The same operation is performed on the partitions simultaneously which helps achieve fast data processing with spark. Map and Reduce operations can be effectively applied in parallel in apache spark by dividing the data into multiple partitions. A copy of each partition within an RDD is distributed across several workers running on different nodes of a cluster so that in case of failure of a single worker the RDD still remains available.
+
+Degree of parallelism of each operation on RDD depends on the fixed number of partitions that an RDD has. We can specify the degree of parallelism or the number of partitions when creating it or later on using the repartition () and coalesce() methods.
+
+partRDD = sc.textFile("/opt/spark/CHANGES.txt",4)
+coalesce ()  is an optimized version of repartition() method that avoids data movement and is generally used to decrease the number of partitions after filtering a large dataset.
+
+You can check the current number of partitions an RDD has by using the following methods- rdd.getNumPartitions()
+
+>>>partRDD.getNumPartitions()
+
+When processing data with reduceByKey operation, Spark will form as many number of output partitions based on the default parallelism which depends on the numbers of nodes and cores available on each node.
+
+Following are the two versions of the map transformation which work on each partition of RDD separately leveraging maximum cores and memory of the spark cluster-
+
+partRDD.mapPartitions() : This runs a map operation individually on each partition unlike a normal map operation where map is used to operate on each line of the entire RDD.
+
+mapPartitionsWithIndex() : This works same as partRDD.mapPartitions but we can additionally specify the partition number on which this operation has to be applied.
+
+*****************************************
+SUM of Even & ODD No from Prime _Numbers:::
+
+valintRDD = sc.parallelize(Array(1,4,5,6,7,10,15))
+valevenNumbersRDD=intRDD.filter(i => (i%2==0))
+sum= valevenNumbersRDD.sum
+
+*************
+def isprime(n):
+    """
+    check if integer n is a prime
+    """
+    # make sure n is a positive integer
+    n = abs(int(n))
+    # 0 and 1 are not primes
+    if n < 2:
+        return False
+    # 2 is the only even prime number
+    if n == 2:
+        return True
+    # all other even numbers are not primes
+    if not n & 1:
+        return False
+    # range starts with 3 and only needs to go up the square root of n
+    # for all odd numbers
+    for x in range(3, int(n**0.5)+1, 2):
+        if n % x == 0:
+            return False
+    return True
+
+# Create an RDD of numbers from 0 to 1,000,000
+nums = sc.parallelize(xrange(1000000))
+
+# Compute the number of primes in the RDD
+print nums.filter(isprime).count()
