@@ -1,0 +1,423 @@
+baby_names = sc.textFile("baby_names.csv")
+>>> rows = baby_names.map(lambda line: line.split(","))
+
+
+
+
+
+******************
+MAPPARTITIONS(FUNC, PRESERVESPARTITIONING=FALSE)
+Consider mapPartitions a tool for performance optimization if you have the resources available.  It won’t do much when running examples on your laptop.  It’s the same as “map”, but works with Spark RDD partitions which are distributed.  Remember the first D in RDD – Resilient Distributed Datasets.
+
+In examples below that when using parallelize, elements of the collection are copied to form a distributed dataset that can be operated on in parallel.
+
+A distributed dataset can be operated on in parallel.
+
+One important parameter for parallel collections is the number of partitions to cut the dataset into. Spark will run one task for each partition of the cluster.
+
+******************
+>>> one_through_9 = range(1,10)
+>>> parallel = sc.parallelize(one_through_9, 3)
+>>> def f(iterator): yield sum(iterator)
+>>> parallel.mapPartitions(f).collect()
+[6, 15, 24]
+ 
+>>> parallel = sc.parallelize(one_through_9)
+>>> parallel.mapPartitions(f).collect()
+[1, 2, 3, 4, 5, 6, 7, 17]
+
+*******************************************
+See what’s happening?  Results [6,15,24] are created because mapPartitions loops through 3 partitions which is the second argument to the sc.parallelize call.
+
+Partion 1: 1+2+3 = 6
+
+Partition 2: 4+5+6 = 15
+
+Partition 3: 7+8+9 = 24
+
+The second example produces [1,2,3,4,5,6,7,17] which I’m guessing means the default number of partitions on my laptop is 8.
+
+Partion 1 = 1
+
+Partition 2= 2
+
+Partion 3 = 3
+
+Partition 4 = 4
+
+Partion 5 = 5
+
+Partition 6 = 6
+
+Partion 7 = 7
+
+Partition 8: 8+9 = 17
+
+Typically you want 2-4 partitions for each CPU core in your cluster. Normally, Spark tries to set the number of partitions automatically based on your cluster or hardware based on standalone environment.
+
+To find the default number of partitions and confirm the guess of 8 above:
+
+Spark Python
+1
+2
+3
+4
+ 
+>>> print sc.defaultParallelism
+8
+
+****************************************
+
+MAPPARTITIONSWITHINDEX(FUNC)
+
+Similar to mapPartitions, but also provides a function with an int value to indicate the index position of the partition.
+
+>>> parallel = sc.parallelize(range(1,10),4)
+>>> def show(index, iterator): yield 'index: '+str(index)+" values: "+ str(list(iterator))
+>>> parallel.mapPartitionsWithIndex(show).collect()
+ 
+['index: 0 values: 1',
+ 'index: 1 values: 3',
+ 'index: 2 values: 5',
+ 'index: 3 values: 7']
+ 
+ ***********************
+ >> parallel = sc.parallelize(range(1,10),3)
+>>> def show(index, iterator): yield 'index: '+str(index)+" values: "+ str(list(iterator))
+>>> parallel.mapPartitionsWithIndex(show).collect()
+ 
+['index: 0 values: [1, 2, 3]',
+ 'index: 1 values: [4, 5, 6]',
+ 'index: 2 values: [7, 8, 9]']
+ 
+ *************************************************
+ 
+ SAMPLE(WITHREPLACEMENT,FRACTION, SEED)
+ 
+ Return a random sample subset RDD of the input RDD
+ 
+ >>> parallel = sc.parallelize(range(1,10))
+>>> parallel.sample(True,.2).count()
+2
+ 
+>>> parallel.sample(True,.2).count()
+1
+ 
+>>> parallel.sample(True,.2).count()
+2
+
+******************
+Parameters:	
+sample(withReplacement, fraction, seed=None)
+withReplacement – can elements be sampled multiple times (replaced when sampled out)
+fraction – expected size of the sample as a fraction of this RDD’s size without replacement: probability that each element is chosen; fraction must be [0, 1] with replacement: expected number of times each element is chosen; fraction must be >= 0
+seed – seed for the random number generator
+
+****************************************************
+ 
+*****************
+
+
+
+THE KEYS
+The group of transformation functions (groupByKey, reduceByKey, aggregateByKey, sortByKey, join) all act on key,value pair RDDs.
+
+For the following, we’re going to use the baby_names.csv file again which was introduced in a previous post What is Apache Spark?
+
+All the following examples presume the baby_names.csv file has been loaded and split such as:
+
+Requirements for next few spark python examples
+1
+2
+3
+4
+ 
+>>> baby_names = sc.textFile("baby_names.csv")
+>>> rows = baby_names.map(lambda line: line.split(","))
+ 
+
+
+
+GROUPBYKEY([NUMTASKS])
+“When called on a dataset of (K, V) pairs, returns a dataset of (K, Iterable<V>) pairs. ”
+
+The following groups all names to counties in which they appear over the years.
+
+Spark groupByKey example with Python
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+ 
+>>> rows = baby_names.map(lambda line: line.split(","))
+>>> namesToCounties = rows.map(lambda n: (str(n[1]),str(n[2]) )).groupByKey()
+>>> namesToCounties.map(lambda x : {x[0]: list(x[1])}).collect()
+ 
+[{'GRIFFIN': ['ERIE',
+   'ONONDAGA',
+   'NEW YORK',
+   'ERIE',
+   'SUFFOLK',
+   'MONROE',
+   'NEW YORK',
+...
+ 
+The above example was created from baby_names.csv file which was introduced in previous post What is Apache Spark?
+
+
+
+
+REDUCEBYKEY(FUNC, [NUMTASKS])
+Operates on key, value pairs again, but the func must be of type (V,V) => V
+
+Let’s sum the yearly name counts over the years in the CSV.  Notice we need to filter out the header row.  Also notice we are going to use the “Count” column value (n[4])
+
+Spark reduceByKey example in Python
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+ 
+>>> filtered_rows = baby_names.filter(lambda line: "Count" not in line).map(lambda line: line.split(","))
+>>> filtered_rows.map(lambda n:  (str(n[1]), int(n[4]) ) ).reduceByKey(lambda v1,v2: v1 + v2).collect()
+ 
+[('GRIFFIN', 268),
+ ('KALEB', 172),
+ ('JOHNNY', 219),
+ ('SAGE', 5),
+ ('MIKE', 40),
+ ('NAYELI', 44),
+....
+ 
+Formal API: reduceByKey(func: (V, V) ⇒ V): RDD[(K, V)]
+
+The above example was created from baby_names.csv file which was introduced in previous post What is Apache Spark?
+
+
+
+
+AGGREGATEBYKEY(ZEROVALUE)(SEQOP, COMBOP, [NUMTASKS])
+Ok, I admit, this one drives me a bit nuts.  Why wouldn’t we just use reduceByKey?  I don’t feel smart enough to know when to use aggregateByKey over reduceByKey.  For example, the same results may be produced as reduceByKey:
+
+Spark aggregateByKey example with Python
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+ 
+>>> filtered_rows = baby_names.filter(lambda line: "Count" not in line).map(lambda line: line.split(","))
+>>> filtered_rows.map(lambda n:  (str(n[1]), int(n[4]) ) ).aggregateByKey(0, lambda k,v: int(v)+k, lambda v,k: k+v).collect()
+ 
+[('GRIFFIN', 268),
+ ('KALEB', 172),
+ ('JOHNNY', 219),
+ ('SAGE', 5),
+...
+ 
+And again,  the above example was created from baby_names.csv file which was introduced in previous post What is Apache Spark?
+
+There’s a gist of aggregateByKey as well.
+
+
+
+
+SORTBYKEY(ASCENDING=TRUE, NUMPARTITIONS=NONE, KEYFUNC=<FUNCTION <LAMBDA>>)
+This simply sorts the (K,V) pair by K.  Try it out. See examples above on where babyNames originates.
+
+Spark sortByKey example with Python
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+ 
+>>> filtered_rows.map (lambda n:  (str(n[1]), int(n[4]) ) ).sortByKey().collect()
+[('AADEN', 18),
+ ('AADEN', 11),
+ ('AADEN', 10),
+ ('AALIYAH', 50),
+ ('AALIYAH', 44),
+...
+ 
+#opposite
+>>> filtered_rows.map (lambda n:  (str(n[1]), int(n[4]) ) ).sortByKey(False).collect()
+ 
+[('ZOIE', 5),
+ ('ZOEY', 37),
+ ('ZOEY', 32),
+ ('ZOEY', 30),
+...
+ 
+
+
+
+JOIN(OTHERDATASET, [NUMTASKS])
+If you have relational database experience, this will be easy.  It’s joining of two datasets.  Other joins are available as well such as leftOuterJoin and rightOuterJoin.
+
+Spark join example, leftOuterJoin example, rightOuterJoin example in Python
+1
+2
+3
+4
+5
+6
+7
+ 
+>>> names1 = sc.parallelize(("abe", "abby", "apple")).map(lambda a: (a, 1))
+>>> names2 = sc.parallelize(("apple", "beatty", "beatrice")).map(lambda a: (a, 1))
+>>> names1.join(names2).collect()
+ 
+[('apple', (1, 1))]
+ 
+leftOuterJoin, rightOuterJoin
+
+ 
+
+leftOuterJoin, rightOuterJoin transformations in Python
+1
+2
+3
+4
+5
+6
+7
+ 
+>>> names1.leftOuterJoin(names2).collect()
+[('abe', (1, None)), ('apple', (1, 1)), ('abby', (1, None))]
+ 
+>>> names1.rightOuterJoin(names2).collect()
+[('apple', (1, 1)), ('beatrice', (None, 1)), ('beatty', (None, 1))]
+ 
+ 
+ *****************************************************
+ 
+ baby_names = sc.textFile("baby_names_reduced.csv")
+baby_names.count()
+
+# map used to iterate over every line in file
+# pass in lambda to split into an array of columns
+rows = baby_names.map(lambda line: line.split(","))
+# print out the data
+for row in rows.take(rows.count()): print(row[1])
+
+sc.parallelize([2, 3, 4]).flatMap(lambda x: [x,x,x])
+sc.parallelize([1,2,3]).map(lambda x: [x,x,x]).collect()
+rows.filter(lambda line: "MICHAEL" in line).collect()
+
+one_through_nine = range(1,10)
+parallel = sc.parallelize(one_through_nine,2)
+def f(iterator): yield sum(iterator)
+parallel.mapPartitions(f).collect()
+
+paralleldd = sc.parallelize(one_through_nine)
+paralleldd.mapPartitions(f).collect()
+
+
+print sc.defaultParallelism
+
+parallel = sc.parallelize(one_through_nine,3)
+def show(index, iterator): yield 'index: '+str(index)+" values: "+ str(list(iterator))
+parallel.mapPartitionsWithIndex(show).collect()
+
+parallel.sample(True,.2).count()
+
+parallel.sample(True,.2).count()
+
+one = sc.parallelize(range(1,10))
+two = sc.parallelize(range(10,21))
+one.union(two).collect()
+
+one = sc.parallelize(range(1,10))
+two = sc.parallelize(range(5,15))
+one.intersection(two).collect()
+
+rows = baby_names.map(lambda line: line.split(","))
+namesToCounties = rows.map(lambda n: (str(n[1]),str(n[2]) )).groupByKey()
+namesToCounties.map(lambda x : {x[0]: list(x[1])}).collect()
+
+
+filtered_rows = baby_names.filter(lambda line: "Count" not in line).map(lambda line: line.split(","))
+filtered_rows.map(lambda n:  (str(n[1]), int(n[4]) ) ).reduceByKey(lambda v1,v2: v1 + v2).collect()
+
+
+filtered_rows = baby_names.filter(lambda line: "Count" not in line).map(lambda line: line.split(","))
+filtered_rows.map(lambda n:  (str(n[1]), int(n[4]) ) ).aggregateByKey(0, lambda k,v: int(v)+k, lambda v,k: k+v).collect()
+
+
+
+filtered_rows.map (lambda n:  (str(n[1]), int(n[4]) ) ).sortByKey(False).collect()
+
+names1 = sc.parallelize(("abe", "abby", "apple")).map(lambda a: (a, 1))
+names2 = sc.parallelize(("apple", "beatty", "beatrice")).map(lambda a: (a, 1))
+names1.join(names2).collect()
+
+names1.leftOuterJoin(names2).collect()
+
+names1.rightOuterJoin(names2).collect()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
